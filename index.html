@@ -1,47 +1,35 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rotation des Cartes - Delta Force</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rotation Map Delta Force</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 2rem;
-      background-color: #121212;
-      color: #f0f0f0;
-    }
-    .carte {
-      margin-top: 1.5rem;
-      font-size: 1.2rem;
-    }
-    .heure {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #aaa;
-    }
-    button {
-      margin-top: 2rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border: none;
-      background-color: #3498db;
-      color: white;
-      border-radius: 5px;
-    }
+    body { font-family: Arial, sans-serif; background: #1e1e1e; color: #f5f5f5; padding: 20px; }
+    h1, h2 { color: #ffcc00; }
+    select, button { padding: 8px; margin-top: 10px; }
+    .section { margin-top: 30px; }
   </style>
 </head>
 <body>
-  <h1>Cartes Delta Force</h1>
-  <div class="carte" id="carte"></div>
-  <div class="carte" id="comptes"></div>
-  <div class="heure" id="heure"></div>
-  <button onclick="updateCarte()">Actualiser</button>
+  <h1>Rotation Map Delta Force</h1>
+
+  <div id="currentMap"></div>
+  <div id="countdown" style="margin-top: 10px;"></div>
+  <div class="section">
+    <h2>Prochaines cartes</h2>
+    <ul id="nextMaps"></ul>
+  </div>
+
+  <div class="section">
+    <h2>Quand revient ma carte préférée ?</h2>
+    <label for="mapSelect">Choisir une carte :</label>
+    <select id="mapSelect"></select>
+    <div id="nextOccurrence" style="margin-top: 10px;"></div>
+  </div>
 
   <script>
-    const rotations = {
+    const rotation = {
       0: ["Cité spatial: Normal", "Cité spatiel: Difficile"],
       1: ["Cité spatial: Normal", "Barrage Zero - Blackout Long Night"],
       2: ["Brakkesh: Normal", "Barrage Zero - Blackout Long Night"],
@@ -68,52 +56,88 @@
       23: ["Brakkesh: Normal", "Bosquet de layali: Normal"]
     };
 
-    function updateCarte() {
+    const allMaps = [...new Set(Object.values(rotation).flat())];
+    const mapSelect = document.getElementById("mapSelect");
+    allMaps.forEach(map => {
+      const opt = document.createElement("option");
+      opt.value = map;
+      opt.textContent = map;
+      mapSelect.appendChild(opt);
+    });
+
+    function getHourInUTCPlus1() {
       const now = new Date();
-
-      const utcHour = now.getUTCHours();
-      const localOffset = now.getTimezoneOffset() / -60;
-      const localHour = now.getHours().toString().padStart(2, "0");
-      const localMinute = now.getMinutes().toString().padStart(2, "0");
-
-      const cartes = rotations[utcHour] || ["Carte inconnue"];
-      const frHourCurrent = (utcHour + localOffset + 24) % 24;
-
-      document.getElementById("carte").innerHTML =
-        `<strong>Cartes actuelles (UTC ${utcHour}:00 / FR ${frHourCurrent}:00)</strong><br>` +
-        cartes.map(c => `<div>• ${c}</div>`).join("");
-
-      // Countdown to next 3 changes
-      const comptesHtml = [];
-      for (let i = 1; i <= 3; i++) {
-        const nextHour = (utcHour + i) % 24;
-        const frHourNext = (nextHour + localOffset + 24) % 24;
-        const prochainesCartes = rotations[nextHour] || ["Carte inconnue"];
-
-        const nextChange = new Date(now);
-        nextChange.setUTCHours(nextHour, 0, 0, 0);
-        if (nextChange < now) nextChange.setUTCDate(nextChange.getUTCDate() + 1);
-        const timeLeft = nextChange - now;
-        const seconds = Math.floor((timeLeft / 1000) % 60).toString().padStart(2, "0");
-        const minutes = Math.floor((timeLeft / 1000 / 60) % 60).toString().padStart(2, "0");
-        const hours = Math.floor(timeLeft / 1000 / 60 / 60).toString().padStart(2, "0");
-
-        comptesHtml.push(`
-          <div class="carte">
-            <strong>Dans ${hours}:${minutes}:${seconds} (UTC ${nextHour}:00 / FR ${frHourNext}:00)</strong><br>
-            ${prochainesCartes.map(c => `<div>• ${c}</div>`).join("")}
-          </div>
-        `);
-      }
-
-      document.getElementById("comptes").innerHTML = comptesHtml.join("");
-
-      document.getElementById("heure").innerText =
-        `Heure locale : ${localHour}:${localMinute} | UTC : ${utcHour.toString().padStart(2, "0")}:${localMinute}`;
+      return (now.getUTCHours() + 1) % 24;
     }
 
-    setInterval(updateCarte, 1000);
-    updateCarte();
+    function getNextRotationTimes(currentHour) {
+      let times = [];
+      for (let i = 1; i <= 24; i++) {
+        times.push((currentHour + i) % 24);
+      }
+      return times;
+    }
+
+    function formatHour(hour) {
+      return `${hour.toString().padStart(2, "0")}:00`;
+    }
+
+    function updateUI() {
+      const now = new Date();
+      const currentHour = getHourInUTCPlus1();
+      const nextHour = (currentHour + 1) % 24;
+
+      // Carte actuelle
+      const current = rotation[currentHour];
+      document.getElementById("currentMap").innerHTML = `
+        <h2>Carte actuelle (UTC+1: ${formatHour(currentHour)})</h2>
+        <ul>${current.map(c => `<li>${c}</li>`).join("")}</ul>
+      `;
+
+      // Countdown
+      const msUntilNextHour = 3600000 - (now.getMinutes() * 60000 + now.getSeconds() * 1000 + now.getMilliseconds());
+      updateCountdown(msUntilNextHour);
+
+      // 3 prochaines heures
+      const next = [1, 2, 3].map(i => (currentHour + i) % 24);
+      const nextMapsHtml = next.map(h => `
+        <li><strong>${formatHour(h)} (UTC+1)</strong> : ${rotation[h].join(", ")}</li>
+      `).join("");
+      document.getElementById("nextMaps").innerHTML = nextMapsHtml;
+    }
+
+    function updateCountdown(ms) {
+      const countdownDiv = document.getElementById("countdown");
+      function tick() {
+        const mins = Math.floor(ms / 60000);
+        const secs = Math.floor((ms % 60000) / 1000);
+        countdownDiv.textContent = `Prochaine rotation dans : ${mins}m ${secs}s`;
+        ms -= 1000;
+        if (ms >= 0) setTimeout(tick, 1000);
+      }
+      tick();
+    }
+
+    mapSelect.addEventListener("change", () => {
+      const selected = mapSelect.value;
+      const now = new Date();
+      const currentHour = getHourInUTCPlus1();
+      const nextTimes = getNextRotationTimes(currentHour);
+
+      for (let i = 0; i < nextTimes.length; i++) {
+        const h = nextTimes[i];
+        if (rotation[h].includes(selected)) {
+          const futureHour = (currentHour + i + 1) % 24;
+          const inHours = i + 1;
+          const todayOrTomorrow = currentHour + inHours >= 24 ? "demain" : "aujourd’hui";
+          document.getElementById("nextOccurrence").innerHTML =
+            `Prochaine apparition de <strong>${selected}</strong> : ${todayOrTomorrow} à <strong>${formatHour(futureHour)} (UTC+1)</strong>`;
+          break;
+        }
+      }
+    });
+
+    updateUI();
   </script>
 </body>
 </html>
