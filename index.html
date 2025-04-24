@@ -80,7 +80,7 @@
       const frHourCurrent = (utcHour + localOffset + 24) % 24;
 
       document.getElementById("carte").innerHTML =
-        `<strong>Cartes actuelles (UTC ${utcHour}:00 / FR ${frHourCurrent}:00)</strong><br>` +
+        `<strong>Cartes actuelles (${frHourCurrent}:00)</strong><br>` +
         cartes.map(c => `<div>• ${c}</div>`).join("");
 
       // Countdown to next 6 changes
