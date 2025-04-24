@@ -80,7 +80,7 @@
       const frHourCurrent = (utcHour + localOffset + 24) % 24;
 
       document.getElementById("carte").innerHTML =
-        `<strong>Cartes actuelles (<span style="color: blue;">${frHourCurrent}:00)</strong><br>` +
+        `<strong>Cartes actuelles <span style="color: blue;">${frHourCurrent}:00)</strong><br>` +
         cartes.map(c => `<div>• ${c}</div>`).join("");
 
       // Countdown to next 6 changes
@@ -100,7 +100,7 @@
 
         comptesHtml.push(`
           <div class="carte">
-            <strong>Dans ${hours}:${minutes}:${seconds} (<span style="color: blue;">${frHourNext}:00)</strong><br>
+            <strong>Dans ${hours}:${minutes}:${seconds} (<span style="color: blue;">${frHourNext}:00</span>)</strong><br>
             ${prochainesCartes.map(c => `<div>• ${c}</div>`).join("")}
           </div>
         `);
