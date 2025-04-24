@@ -100,7 +100,7 @@
 
         comptesHtml.push(`
           <div class="carte">
-            <strong>Dans ${hours}:${minutes}:${seconds} (UTC ${nextHour}:00 / FR ${frHourNext}:00)</strong><br>
+            <strong>Dans ${hours}:${minutes}:${seconds} (${frHourNext}:00)</strong><br>
             ${prochainesCartes.map(c => `<div>• ${c}</div>`).join("")}
           </div>
         `);
