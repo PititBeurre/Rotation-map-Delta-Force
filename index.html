@@ -85,7 +85,7 @@
 
       // Countdown to next 6 changes
       const comptesHtml = [];
-      for (let i = 1; i <= 6; i++) {
+      for (let i = 1; i <= 23; i++) {
         const nextHour = (utcHour + i) % 24;
         const frHourNext = (nextHour + localOffset + 24) % 24;
         const prochainesCartes = rotations[nextHour] || ["Carte inconnue"];
